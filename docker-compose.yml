@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  stock-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_RELOAD=true
+    env_file:
+      - .env
+    volumes:
+      # Mount source code for hot-reload in development
+      - ./src:/app/src
+      # Persist data
+      - ./data:/app/data
+      # Persist logs
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - stock-agent-network
+
+networks:
+  stock-agent-network:
+    driver: bridge
